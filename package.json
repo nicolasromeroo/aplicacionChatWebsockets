@@ -1,0 +1,26 @@
+{
+  "name": "aplicacionchatwebsockets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicolasromeroo/aplicacionChatWebsockets.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nicolasromeroo/aplicacionChatWebsockets/issues"
+  },
+  "homepage": "https://github.com/nicolasromeroo/aplicacionChatWebsockets#readme",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.21.0",
+    "express-handlebars": "^8.0.1",
+    "socket.io": "^4.7.5"
+  }
+}

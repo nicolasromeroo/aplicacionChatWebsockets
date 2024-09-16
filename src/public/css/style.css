@@ -1,0 +1,21 @@
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f0f0f0;
+}
+
+#chatBox {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+.user-message {
+    background-color: #e0e0e0;
+    border-radius: 5px;
+}

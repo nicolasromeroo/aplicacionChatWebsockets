@@ -1,163 +1,249 @@
 
-const socket = io()
+document.addEventListener('DOMContentLoaded', () => {
+    const socket = io();
 
-let user
-let chatBox = document.getElementById('chatbox')
+    function promptForUsername() {
+        Swal.fire({
+            title: 'Bienvenido',
+            input: 'text',
+            inputLabel: 'Ingresa tu nombre',
+            inputPlaceholder: 'Nombre',
+            allowOutsideClick: false,
+            inputValidator: (value) => {
+                if (!value || !value.trim()) {
+                    return 'El nombre de usuario no puede estar vacío.';
+                }
+                return null;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const username = result.value.trim();
+                console.log('Nombre de usuario recibido en cliente:', username); // Para depuración
+                if (username) {
+                    document.getElementById('username').innerText = username;
+                    socket.emit('usuarioNuevoConectado', username);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se ingresó ningún nombre de usuario.'
+                    }).then(() => {
+                        promptForUsername(); // Volver a solicitar el nombre de usuario
+                    });
+                }
+            }
+        });
+    }
 
-Swal.fire({
-    title: "Identificarse",
-    input: 'text',
-    text: "Ingresa tu usuario para identificarte en el chat",
-    inputValidator: (value) => {
-        return !value && 'Necesitas escribir un nombre para ingresar.'
-    },
-    allowOutsideClick: false
-}).then(result => {
-    user = result.value
-    document.getElementById('username').textContent = user
-    socket.emit('usuarioNuevoConectado', { user: user })
-})
+    promptForUsername();
 
-chatBox.addEventListener('keyup', (evt) => {
-    if (evt.key === 'Enter') {
-        if (chatBox.value.trim().length) {
-            socket.emit('message', { user: user, message: chatBox.value })
-            chatBox.value = ''
+    const sendMessageButton = document.getElementById('sendMessage');
+    const chatboxInput = document.getElementById('chatbox');
+
+    // enviar el mensaje
+    const sendMessage = () => {
+        const message = chatboxInput.value.trim();
+        if (message) {
+            socket.emit('message', { message });
+            chatboxInput.value = '';
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'El mensaje no puede estar vacío.'
+            });
         }
+    };
+
+    // evt clic en el botón de enviar
+    if (sendMessageButton && chatboxInput) {
+        sendMessageButton.addEventListener('click', sendMessage);
     }
-})
 
-chatBox.addEventListener('input', () => {
-    socket.emit('typing')
-})
+    // evt tecla en el campo de entrada del mensaje
+    if (chatboxInput) {
+        chatboxInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
 
-socket.on('messageLogs', (data) => {
-    let log = document.getElementById('messageLogs')
-    let messagesHtml = ""
-    data.forEach(message => {
-        messagesHtml += `${message.user} dice: ${message.message}<br>`
-    })
-    log.innerHTML = messagesHtml
-})
 
-socket.on('userList', (data) => {
-    let userList = document.getElementById('userList')
-    let userHtml = ""
-    data.forEach(user => {
-        userHtml += `${user.user} <br>`
-    })
-    userList.innerHTML = userHtml
-})
+        chatboxInput.addEventListener('input', () => {
+            socket.emit('typing');
+        });
+    }
 
-socket.on('newUserConnected', newUser => {
-    Swal.fire({
-        text: "Nuevo usuario conectado",
-        toast: true,
-        position: 'top-right',
-        icon: 'info',
-        title: `${newUser.user} se ha unido al chat.`,
-        showConfirmButton: false,
-        timer: 5000
-    })
-})
+    const addTaskButton = document.getElementById('addTaskButton');
+    const taskInput = document.getElementById('taskInput');
 
-socket.on('usuarioEscribiendo', (user) => {
-    let objectTyping = document.getElementById('typing')
-    objectTyping.innerHTML = user.user + ' esta escribiendo...'
+    if (addTaskButton && taskInput) {
+        addTaskButton.addEventListener('click', () => {
+            const task = { id: Date.now(), text: taskInput.value.trim(), completed: false };
+            if (taskInput.value.trim()) {
+                socket.emit('addTask', task);
+                taskInput.value = '';
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'La tarea no puede estar vacía.'
+                });
+            }
+        });
+    }
 
-})
-
-// otras funciones
-// notificaciones de usuario desconectado
-socket.on('userDisconnected', (user) => {
-    Swal.fire({
-        text: `${user} se ha desconectado.`,
-        toast: true,
-        position: 'top-right',
-        icon: 'warning',
-        showConfirmButton: false,
-        timer: 3000
+    socket.on('messageLogs', (messages) => {
+        const messageLogs = document.getElementById('messageLogs');
+        if (messageLogs) {
+            messageLogs.innerHTML = '';
+            messages.forEach(msg => {
+                const messageElement = document.createElement('p');
+                messageElement.innerHTML = `<strong>${msg.user}:</strong> ${msg.message}`;
+                messageLogs.appendChild(messageElement);
+            });
+        }
     });
+
+    socket.on('userDisconnected', (message) => {
+        Swal.fire({
+            icon: 'info',
+            title: 'Usuario desconectado',
+            text: message,
+            toast: true,
+            position: 'top-right',
+            showConfirmButton: false,
+            timer: 5000
+        });
+    });
+    
+
+    socket.on('connect', () => {
+        console.log('Conectado al servidor');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Desconectado del servidor');
+    });
+
+
+
+    socket.on('newUserConnected', (data) => {
+        Swal.fire({
+            text: "Nuevo usuario conectado",
+            toast: true,
+            position: 'top-right',
+            icon: 'info',
+            title: `${data.user} se ha unido al chat.`,
+            showConfirmButton: false,
+            timer: 5000
+        });
+    });
+
+    socket.on('usuarioEscribiendo', (data) => {
+        let objectTyping = document.getElementById('typing');
+        if (objectTyping) {
+            objectTyping.innerHTML = `${data.user} está escribiendo...`;
+            setTimeout(() => {
+                objectTyping.innerHTML = '';
+            }, 2000);
+        }
+    });
+
+    // socket.on('userList', (users) => {
+    //     const userList = document.getElementById('userList');
+    //     if (userList) {
+    //         userList.innerHTML = '';
+    //         users.forEach(user => {
+    //             const userElement = document.createElement('p');
+    //             userElement.innerText = user;
+    //             userList.appendChild(userElement);
+    //         });
+    //     }
+    // });
+
+    socket.on('userList', (users) => {
+        const userSelector = document.getElementById('userSelector');
+        if (userSelector) {
+            userSelector.innerHTML = '<option value="">Seleccionar usuario</option>'; // Limpiar y agregar opción por defecto
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                userSelector.appendChild(option);
+            });
+        }
+    });
+
+    socket.on('historialDelChat', (messages) => {
+        const messageLogs = document.getElementById('messageLogs');
+        if (messageLogs) {
+            messageLogs.innerHTML = '';
+            messages.forEach(msg => {
+                const messageElement = document.createElement('p');
+                messageElement.innerHTML = `<strong>${msg.user}:</strong> ${msg.message}`;
+                messageLogs.appendChild(messageElement);
+            });
+        }
+    });
+
+    // socket.on('tasks', (tasks) => {
+    //     const tasksList = document.getElementById('tasksList');
+    //     if (tasksList) {
+    //         tasksList.innerHTML = '';
+    //         tasks.forEach(task => {
+    //             const taskElement = document.createElement('li');
+    //             taskElement.innerText = task.text;
+    //             if (task.completed) {
+    //                 taskElement.style.textDecoration = 'line-through';
+    //             }
+    //             tasksList.appendChild(taskElement);
+    //         });
+    //     }
+    // });
+    socket.on('tasks', (tasks) => {
+        const tasksList = document.getElementById('tasksList');
+        if (tasksList) {
+            tasksList.innerHTML = '';
+            tasks.forEach(task => {
+                const taskElement = document.createElement('li');
+                taskElement.innerText = task.text;
+                if (task.completed) {
+                    taskElement.style.textDecoration = 'line-through';
+                }
+                taskElement.addEventListener('click', () => {
+                    socket.emit('toggleTask', task.id);
+                });
+                tasksList.appendChild(taskElement);
+            });
+        }
+    });
+
+    socket.emit('getTasks');
+
+    const userSelector = document.getElementById('userSelector');
+
+userSelector.addEventListener('change', (event) => {
+    const selectedUser = event.target.value;
+    socket.emit('getTasksForUser', selectedUser);
 });
 
-// enviar msj privado
-
-function sendPrivateMessage(toUserId, message) {
-    socket.emit('privateMessage', { toUserId: toUserId, message: message });
-}
-// recibir msj privados
-socket.on('privateMessage', (data) => {
-    Swal.fire({
-        text: `Mensaje privado de ${data.fromUser}: ${data.message}`,
-        toast: true,
-        position: 'top-right',
-        icon: 'info',
-        showConfirmButton: true
-    });
-});
-
-// unirse a una sala
-socket.emit('joinRoom', 'Sala1');
-// enviar msj a una sala
-function sendRoomMessage(room, message) {
-    socket.emit('roomMessage', { room: room, message: message });
-}
-
-// notificacion de errores
-socket.on('errorMessage', (error) => {
-    Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error,
-    });
-});
-
-// enviar reaccion
-function reactToMessage(messageId, reaction) {
-    socket.emit('reactToMessage', { messageId: messageId, reaction: reaction });
-}
-// recibir reaccion
-socket.on('messageReaction', ({ messageId, reaction }) => {
-    // Mostrar la reacción al mensaje correspondiente
-    let messageElement = document.querySelector(`[data-id="${messageId}"]`);
-    if (messageElement) {
-        messageElement.innerHTML += ` <span>${reaction}</span>`;
+socket.on('tasksForUser', (tasks) => {
+    const tasksList = document.getElementById('tasksList');
+    if (tasksList) {
+        tasksList.innerHTML = '';
+        tasks.forEach(task => {
+            const taskElement = document.createElement('li');
+            taskElement.innerText = task.text;
+            if (task.completed) {
+                taskElement.style.textDecoration = 'line-through';
+            }
+            taskElement.addEventListener('click', () => {
+                socket.emit('toggleTask', task.id);
+            });
+            tasksList.appendChild(taskElement);
+        });
     }
 });
-
-// // enviar archivo
-// document.getElementById('fileInput').addEventListener('change', function () {
-//     let file = this.files[0];
-//     let reader = new FileReader();
-//     reader.onload = function (e) {
-//         socket.emit('sendFile', e.target.result);
-//     };
-//     reader.readAsDataURL(file);
-// });
-// // recibir archivo
-// socket.on('receiveFile', (data) => {
-//     let log = document.getElementById('messageLogs');
-//     log.innerHTML += `${data.user} ha enviado un archivo: <a href="${data.file}" download="file">Descargar</a><br>`;
-// });
-
-socket.on('userConnected', (user) => {
-    document.getElementById('status').innerHTML = `${user.user} se ha conectado`;
 });
-
-socket.on('userDisconnected', (user) => {
-    document.getElementById('status').innerHTML = `${user.user} se ha desconectado`;
-});
-
-// compartir ubicacion
-navigator.geolocation.getCurrentPosition((position) => {
-    socket.emit('shareLocation', {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-    });
-});
-// recibir ubicacion
-
-
-
-
-

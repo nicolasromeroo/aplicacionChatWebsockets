@@ -1,7 +1,7 @@
-
+/* 
 body {
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #f0f0f0;
+    background-color: #e71313;
 }
 
 #chatBox {
@@ -18,4 +18,40 @@ body {
 .user-message {
     background-color: #e0e0e0;
     border-radius: 5px;
+} */
+
+* {
+    font-family: "Roboto Mono", monospace;
+    font-optical-sizing: auto;
+    font-style: normal;
+}
+
+.chatContainer {
+    padding: 20px;
+    background-color: #fff4e6;
+    border-radius: 15px;
+    box-shadow: 2px 2px 10px 2px rgb(0, 0, 0);
+}
+
+.typingContainer {
+    color: blueviolet;
+}
+
+.typingContainer input {
+    background-color: #fff4e6;
+    border: none;
+    border-radius: 3px;
+}
+
+#sendMessage {
+    border: none;
+    border-radius: 3px;
+    background-color: black;
+    color: white;
+}
+
+.taskContainer {
+    padding: 20px;
+    background-color: #8c5ce4;
+    border-radius: 15px;
 }

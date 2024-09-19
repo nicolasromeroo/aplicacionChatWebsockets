@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Tareas</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <h1>Gestión de Tareas</h1>
+    <ul id="taskList">
+        <!-- Las tareas se cargarán aquí -->
+    </ul>
+    <form id="taskForm">
+        <input type="text" id="taskInput" placeholder="Nueva tarea" required>
+        <button type="submit">Agregar Tarea</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/tasks.js"></script>
+</body>
+</html>
